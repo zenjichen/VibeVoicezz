@@ -22,6 +22,35 @@ import sounddevice as sd
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
 
+APP_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+def app_path(*parts):
+    return os.path.join(APP_DIR, *parts)
+
+
+def resolve_app_path(path):
+    if not path:
+        return ""
+    expanded = os.path.expanduser(path)
+    if os.path.isabs(expanded):
+        return os.path.abspath(expanded)
+    return os.path.abspath(os.path.join(APP_DIR, expanded))
+
+
+def portable_app_path(path):
+    full_path = resolve_app_path(path)
+    if not full_path:
+        return ""
+    try:
+        relative_path = os.path.relpath(full_path, APP_DIR)
+        if not relative_path.startswith("..") and not os.path.isabs(relative_path):
+            return relative_path
+    except ValueError:
+        pass
+    return full_path
+
+
 # Set environment variable to bypass Windows symlink issue before loading HF hub
 os.environ["HF_HUB_DISABLE_SYMLINKS"] = "1"
 
@@ -389,7 +418,7 @@ class OmniVoiceGUI(ctk.CTk):
         # Base State variables
         self.model = None
         self.recording = False
-        self.recorded_audio_path = os.path.join(os.getcwd(), "recorded_temp.wav")
+        self.recorded_audio_path = app_path("recorded_temp.wav")
         self.recorded_data = []
         self.recording_stream = None
         self.last_generated_audio = None  # Stores (sample_rate, numpy_array)
@@ -403,9 +432,9 @@ class OmniVoiceGUI(ctk.CTk):
         self.user_dragging = False
 
         # Saved Presets management
-        self.presets_file = os.path.join(os.getcwd(), "voice_presets.json")
+        self.presets_file = app_path("voice_presets.json")
         self.presets = self.load_presets()
-        self.settings_file = os.path.join(os.getcwd(), "gui_settings.json")
+        self.settings_file = app_path("gui_settings.json")
         self.gui_settings = self.load_gui_settings()
         if "cache_voice_prompts" not in self.gui_settings:
             self.gui_settings["cache_voice_prompts"] = True
@@ -414,11 +443,11 @@ class OmniVoiceGUI(ctk.CTk):
         self.loaded_model_name = ""
 
         # Library / History setup
-        self.library_dir = os.path.join(os.getcwd(), "generated_audios")
+        self.library_dir = app_path("generated_audios")
         os.makedirs(self.library_dir, exist_ok=True)
         self.history_file = os.path.join(self.library_dir, "history.json")
         self.history = self.load_history()
-        self.voice_prompt_cache_dir = os.path.join(os.getcwd(), "voice_prompt_cache")
+        self.voice_prompt_cache_dir = app_path("voice_prompt_cache")
         os.makedirs(self.voice_prompt_cache_dir, exist_ok=True)
 
         # Multi-select tracking for library
@@ -559,7 +588,7 @@ class OmniVoiceGUI(ctk.CTk):
             self.log(f"Error saving GUI settings: {e}")
 
     def remember_save_dir(self, file_path):
-        file_path = os.path.abspath(file_path)
+        file_path = resolve_app_path(file_path)
         save_dir = os.path.dirname(file_path)
         if save_dir:
             self.gui_settings["last_save_dir"] = save_dir
@@ -569,11 +598,7 @@ class OmniVoiceGUI(ctk.CTk):
             self.update_open_path_button()
 
     def resolve_saved_file_path(self, file_path):
-        if not file_path:
-            return ""
-        if os.path.isabs(file_path):
-            return os.path.abspath(file_path)
-        return os.path.abspath(os.path.join(os.getcwd(), file_path))
+        return resolve_app_path(file_path)
 
     def reveal_file_path(self, file_path, show_error=True):
         full_path = self.resolve_saved_file_path(file_path)
@@ -755,11 +780,11 @@ class OmniVoiceGUI(ctk.CTk):
 
         repo_leaf = name.split("/")[-1].split("\\")[-1]
         candidates = [
-            os.path.join(os.getcwd(), name),
-            os.path.join(os.getcwd(), repo_leaf),
-            os.path.join(os.getcwd(), "models", name),
-            os.path.join(os.getcwd(), "models", repo_leaf),
-            os.path.join(os.getcwd(), "models", name.replace("/", "--").replace("\\", "--")),
+            app_path(name),
+            app_path(repo_leaf),
+            app_path("models", name),
+            app_path("models", repo_leaf),
+            app_path("models", name.replace("/", "--").replace("\\", "--")),
         ]
         for candidate in candidates:
             candidate = os.path.abspath(os.path.expanduser(candidate))
@@ -845,7 +870,7 @@ class OmniVoiceGUI(ctk.CTk):
         self.save_gui_settings()
 
     def get_voice_prompt_cache_key(self, ref_audio, ref_text, preprocess_prompt):
-        full_path = os.path.abspath(os.path.expanduser(ref_audio))
+        full_path = resolve_app_path(ref_audio)
         try:
             stat = os.stat(full_path)
             file_state = {
@@ -943,11 +968,27 @@ class OmniVoiceGUI(ctk.CTk):
         return text
 
     def load_guide_text(self):
-        for filename in ("HDSD_GUI_VN.md", "README.md"):
-            path = os.path.join(os.getcwd(), filename)
+        for filename in ("HDSD_GUI_VN.md", "readme.md", "README.md"):
+            path = app_path(filename)
             if os.path.exists(path):
                 return self.clean_guide_text(self.read_text_file(path)), filename
-        return "Khong tim thay README.md hoac HDSD_GUI_VN.md trong thu muc hien tai.", "N/A"
+        return "Khong tim thay readme.md hoac HDSD_GUI_VN.md trong thu muc app.", "N/A"
+
+    def open_project_readme(self):
+        for filename in ("readme.md", "README.md"):
+            path = app_path(filename)
+            if os.path.exists(path):
+                try:
+                    if sys.platform.startswith("win"):
+                        os.startfile(path)
+                    elif sys.platform == "darwin":
+                        subprocess.Popen(["open", path])
+                    else:
+                        subprocess.Popen(["xdg-open", path])
+                except Exception as e:
+                    messagebox.showerror("Open README", f"Khong mo duoc README:\n{e}")
+                return
+        messagebox.showerror("Open README", "Khong tim thay readme.md trong thu muc app.")
 
     def clean_guide_text(self, text):
         """Convert simple markdown into a cleaner in-app reading view."""
@@ -1026,7 +1067,7 @@ class OmniVoiceGUI(ctk.CTk):
         self.glass_button(
             footer,
             text="? Mở README",
-            command=lambda: os.startfile(os.path.join(os.getcwd(), "README.md")) if os.path.exists(os.path.join(os.getcwd(), "README.md")) else None,
+            command=self.open_project_readme,
             width=140,
         ).grid(row=0, column=0, sticky="w")
         self.glass_button(footer, text="Đóng", command=dialog.destroy, width=100).grid(row=0, column=1, sticky="e")
@@ -1110,7 +1151,7 @@ class OmniVoiceGUI(ctk.CTk):
         self.glass_button(
             footer,
             text="Mở README",
-            command=lambda: os.startfile(os.path.join(os.getcwd(), "README.md")) if os.path.exists(os.path.join(os.getcwd(), "README.md")) else None,
+            command=self.open_project_readme,
             width=130,
             height=38,
         ).grid(row=0, column=0, sticky="w")
@@ -1174,7 +1215,7 @@ class OmniVoiceGUI(ctk.CTk):
         self.glass_button(
             header,
             text="Mở README",
-            command=lambda: os.startfile(os.path.join(os.getcwd(), "README.md")) if os.path.exists(os.path.join(os.getcwd(), "README.md")) else None,
+            command=self.open_project_readme,
             width=120,
             height=36,
         ).grid(row=0, column=2, rowspan=2, padx=14, pady=12, sticky="e")
@@ -2114,7 +2155,7 @@ class OmniVoiceGUI(ctk.CTk):
                     return
 
             self.presets[preset_name] = {
-                "ref_audio": ref_audio,
+                "ref_audio": portable_app_path(ref_audio),
                 "ref_text": ref_text
             }
             self.save_presets_to_file()
@@ -2300,7 +2341,7 @@ class OmniVoiceGUI(ctk.CTk):
             if not item:
                 continue
             file_path = item.get("file_path", "")
-            full_path = os.path.join(os.getcwd(), file_path) if not os.path.isabs(file_path) else file_path
+            full_path = resolve_app_path(file_path)
             if os.path.exists(full_path):
                 try:
                     os.remove(full_path)
@@ -2352,7 +2393,7 @@ class OmniVoiceGUI(ctk.CTk):
         if "Reference:" in details:
             ref_hint = details.split("Reference:", 1)[-1].strip()
             # Check possible absolute or library-relative path
-            possible_abs = ref_hint if os.path.isabs(ref_hint) else os.path.join(os.getcwd(), ref_hint)
+            possible_abs = resolve_app_path(ref_hint)
             possible_lib = os.path.join(self.library_dir, ref_hint)
             
             found_path = ""
@@ -2373,7 +2414,7 @@ class OmniVoiceGUI(ctk.CTk):
 
         file_path = self.selected_lib_item.get("file_path")
         # Handle relative path resolution
-        full_path = os.path.join(os.getcwd(), file_path) if not os.path.isabs(file_path) else file_path
+        full_path = resolve_app_path(file_path)
 
         if not os.path.exists(full_path):
             messagebox.showerror("Error", f"Không tìm thấy file âm thanh tại: {full_path}")
@@ -2427,7 +2468,7 @@ class OmniVoiceGUI(ctk.CTk):
             sf.write(file_path, waveform, rate)
 
             # Save metadata
-            relative_path = os.path.relpath(file_path, os.getcwd())
+            relative_path = os.path.relpath(file_path, APP_DIR)
             item = {
                 "id": unique_id,
                 "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -2545,6 +2586,7 @@ class OmniVoiceGUI(ctk.CTk):
 
         text = self.clone_text.get("1.0", ctk.END).strip()
         ref_audio = self.ref_audio_entry.get().strip()
+        ref_audio_path = resolve_app_path(ref_audio)
         ref_text = self.clone_ref_text.get().strip()
         lang = self.clone_lang
 
@@ -2553,6 +2595,9 @@ class OmniVoiceGUI(ctk.CTk):
             return
         if not ref_audio:
             messagebox.showwarning("Warning", "Please provide a reference audio file or record from microphone first!")
+            return
+        if not os.path.exists(ref_audio_path):
+            messagebox.showwarning("Warning", f"Reference audio file was not found:\n{ref_audio_path}")
             return
 
         # Prepare generation config
@@ -2599,7 +2644,7 @@ class OmniVoiceGUI(ctk.CTk):
                     kwargs["duration"] = duration
 
                 kwargs["voice_clone_prompt"] = self.get_voice_clone_prompt(
-                    ref_audio=ref_audio,
+                    ref_audio=ref_audio_path,
                     ref_text=ref_text,
                     preprocess_prompt=preprocess,
                 )
@@ -2614,7 +2659,7 @@ class OmniVoiceGUI(ctk.CTk):
                 self.last_generated_meta = {
                     "mode": "Clone",
                     "text": text,
-                    "details": f"Voice Clone. Reference: {os.path.basename(ref_audio)}",
+                    "details": f"Voice Clone. Reference: {os.path.basename(ref_audio_path)}",
                 }
                 
                 elapsed = time.time() - start_time
@@ -2622,7 +2667,7 @@ class OmniVoiceGUI(ctk.CTk):
                 self.status_label.configure(text="Status: Done")
                 
                 # Auto-save to library folder
-                self.save_to_library(text, mode="Clone", details=f"Voice Clone. Reference: {os.path.basename(ref_audio)}")
+                self.save_to_library(text, mode="Clone", details=f"Voice Clone. Reference: {os.path.basename(ref_audio_path)}")
 
                 # Enable playback and save controls
                 self.play_btn.configure(state="normal")
@@ -2823,9 +2868,9 @@ class OmniVoiceGUI(ctk.CTk):
             return
 
         rate, waveform = self.last_generated_audio
-        default_dir = self.gui_settings.get("last_save_dir") or os.getcwd()
+        default_dir = self.gui_settings.get("last_save_dir") or APP_DIR
         if not os.path.isdir(default_dir):
-            default_dir = os.getcwd()
+            default_dir = APP_DIR
 
         file_path = filedialog.asksaveasfilename(
             defaultextension=".wav",
