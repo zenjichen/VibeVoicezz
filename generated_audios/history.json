@@ -1,0 +1,66 @@
+[
+    {
+        "id": "1780493041",
+        "timestamp": "2026-06-03 20:24:02",
+        "file_path": "generated_audios\\20260603_202401_Clone_1780493041.wav",
+        "text": "Ngày hôm nay của cậu thế nào, sức khoẻ của cậu vẫn ổn chứ",
+        "mode": "Clone",
+        "details": "Voice Clone. Reference: Nguyệt Ánh.mp3"
+    },
+    {
+        "id": "1780493030",
+        "timestamp": "2026-06-03 20:23:50",
+        "file_path": "generated_audios\\20260603_202350_Clone_1780493030.wav",
+        "text": "Ngày hôm nay của cậu thế nào, sức khoẻ của cậu vẫn ổn chứ",
+        "mode": "Clone",
+        "details": "Voice Clone. Reference: Nguyệt Ánh.mp3"
+    },
+    {
+        "id": "1780493016",
+        "timestamp": "2026-06-03 20:23:36",
+        "file_path": "generated_audios\\20260603_202336_Clone_1780493016.wav",
+        "text": "Ngày hôm nay của cậu thế nào, sức khoẻ của cậu vẫn ổn chứ",
+        "mode": "Clone",
+        "details": "Voice Clone. Reference: Nguyệt Ánh.mp3"
+    },
+    {
+        "id": "1780492993",
+        "timestamp": "2026-06-03 20:23:13",
+        "file_path": "generated_audios\\20260603_202313_Clone_1780492993.wav",
+        "text": "Ngày hôm nay của cậu thế nào, cậu có khoẻ không",
+        "mode": "Clone",
+        "details": "Voice Clone. Reference: Nguyệt Ánh.mp3"
+    },
+    {
+        "id": "1780492981",
+        "timestamp": "2026-06-03 20:23:01",
+        "file_path": "generated_audios\\20260603_202301_Clone_1780492981.wav",
+        "text": "Ngày hôm nay của cậu thế nào, cậu có khoẻ không",
+        "mode": "Clone",
+        "details": "Voice Clone. Reference: Nguyệt Ánh.mp3"
+    },
+    {
+        "id": "1780492944",
+        "timestamp": "2026-06-03 20:22:24",
+        "file_path": "generated_audios\\20260603_202224_Clone_1780492944.wav",
+        "text": "Xin chào, đây là giọng nói đã được clone trực tiếp bằng ứng dụng",
+        "mode": "Clone",
+        "details": "Voice Clone. Reference: Nguyệt Ánh.mp3"
+    },
+    {
+        "id": "1780492865",
+        "timestamp": "2026-06-03 20:21:05",
+        "file_path": "generated_audios\\20260603_202105_Clone_1780492865.wav",
+        "text": "Xin chào, đây là giọng nói đã được clone trực tiếp bằng ứng dụng",
+        "mode": "Clone",
+        "details": "Voice Clone. Reference: Zalo Web (mp3cut.net).mp3"
+    },
+    {
+        "id": "1780492771",
+        "timestamp": "2026-06-03 20:19:31",
+        "file_path": "generated_audios\\20260603_201931_Clone_1780492771.wav",
+        "text": "Xin chào, đây là giọng nói đã được clone trực tiếp bằng ứng dụng",
+        "mode": "Clone",
+        "details": "Voice Clone. Reference: Zalo Web.mp3"
+    }
+]
